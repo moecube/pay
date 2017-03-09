@@ -18,14 +18,14 @@ class Order
         self::$db->exec("WITH expired AS (UPDATE orders SET status = 'expired' WHERE status = 'new' AND created_at + INTERVAL '1 day' < NOW() RETURNING id) UPDATE keys set order_id = NULL FROM expired WHERE order_id = expired.id");
     }
 
-    public static function price(string $app_id, string $currency): int
+    public static function price(string $app_id, string $currency): float
     {
         // PHP是世界上最好的语言 参数模板不能用
         $query = self::$db->prepare("SELECT price_$currency::NUMERIC FROM apps WHERE id = :app_id");
         $query->execute(['app_id' => $app_id]);
         return $query->fetchColumn();
     }
-
+    
     public static function create($id, $app_id, $user_id, $payment, $currency, $total)
     {
         self::$db->beginTransaction();
@@ -47,14 +47,15 @@ class Order
     {
         self::$db->beginTransaction();
 
-        $query = self::$db->prepare("SELECT *, total::NUMERIC AS total, orders.id AS id FROM orders LEFT JOIN keys ON orders.id = keys.order_id WHERE orders.id = :id");
+        $query = self::$db->prepare("SELECT *, total::NUMERIC AS total, orders.id AS id, orders.user_id as user_id FROM orders LEFT JOIN keys ON orders.id = keys.order_id WHERE orders.id = :id");
         $query->execute(['id' => $id]);
         $order = $query->fetch(PDO::FETCH_ASSOC);
 
-        if ($order['status'] == 'finished') {
-            self::$db->rollBack();
-            return;
-        }
+        // if ($order['status'] == 'finished') {
+        //     self::$db->rollBack();
+        //     return;
+        // }
+        error_log(json_encode($order));
 
         $query = self::$db->prepare("UPDATE orders SET status = 'finished', transaction_id = :transaction_id WHERE id = :id");
         $query->execute(['id' => $id, 'transaction_id' => $transaction_id]);
@@ -68,12 +69,12 @@ class Order
         $mail = new PHPMailer;
 
         $mail->isSMTP();                                      // Set mailer to use SMTP
-        $mail->Host = 'smtpdm.aliyun.com';  // Specify main and backup SMTP servers
+        $mail->Host = getenv("SMTP_HOST");  // Specify main and backup SMTP servers
         $mail->SMTPAuth = true;                               // Enable SMTP authentication
-        $mail->Username = 'info@mycard.moe';                 // SMTP username
-        $mail->Password = 's32ksxd9ucCGuYXM';                           // SMTP password
-        $mail->SMTPSecure = 'ssl';                            // Enable TLS encryption, `ssl` also accepted
-        $mail->Port = 465;                                    // TCP port to connect to
+        $mail->Username = getenv("SMTP_USERNAME");                 // SMTP username
+        $mail->Password = getenv("SMTP_PASSWORD");                           // SMTP password
+        $mail->SMTPSecure = getenv("SMTP_SECURE");                            // Enable TLS encryption, `ssl` also accepted
+        $mail->Port = getenv("SMTP_PORT");                                    // TCP port to connect to
 
         $mail->setFrom('info@mycard.moe', 'MyCard');
         $mail->addAddress($order['user_id']);     // Add a recipient
@@ -158,6 +159,8 @@ TEMPLATE;
         $query->execute(['id' => $id]);
         $order = $query->fetch(PDO::FETCH_ASSOC);
 
+        
+
         $formatter = new NumberFormatter("zh_CN", NumberFormatter::CURRENCY);
         $order['total'] = $formatter->formatCurrency(floatval($order['total']), "CNY");
         $formatter = new IntlDateFormatter('zh_CN', IntlDateFormatter::MEDIUM, IntlDateFormatter::LONG, 'Asia/Shanghai');
@@ -195,7 +198,7 @@ TEMPLATE;
         </tr>
         <tr>
             <th style="text-align: left; margin: 5px 0;">付款方式</th>
-            <td style="text-align: right; margin: 5px 0;">支付宝: $order[total]</td>
+            <td style="text-align: right; margin: 5px 0;">$order[payment]: $order[total]</td>
         </tr>
         </tbody>
     </table>

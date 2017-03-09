@@ -1,6 +1,13 @@
 {
     "require": {
         "ramsey/uuid": "^3.5",
-        "phpmailer/phpmailer": "^5.2"
+        "phpmailer/phpmailer": "^5.2",
+        "paypal/rest-api-sdk-php": "*"
+    },
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
+        }
     }
 }
