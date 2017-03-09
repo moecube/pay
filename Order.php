@@ -51,10 +51,10 @@ class Order
         $query->execute(['id' => $id]);
         $order = $query->fetch(PDO::FETCH_ASSOC);
 
-        // if ($order['status'] == 'finished') {
-        //     self::$db->rollBack();
-        //     return;
-        // }
+        if ($order['status'] == 'finished') {
+            self::$db->rollBack();
+            return;
+        }
         error_log(json_encode($order));
 
         $query = self::$db->prepare("UPDATE orders SET status = 'finished', transaction_id = :transaction_id WHERE id = :id");
