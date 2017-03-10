@@ -6,6 +6,8 @@ require_once "../lib/WxPay.Api.php";
 require_once '../lib/WxPay.Notify.php';
 require_once 'log.php';
 
+require_once("../../Order.php");
+
 //初始化日志
 $logHandler= new CLogFileHandler("../logs/".date('Y-m-d').'.log');
 $log = Log::Init($logHandler, 15);
@@ -43,6 +45,14 @@ class PayNotifyCallBack extends WxPayNotify
 		if(!$this->Queryorder($data["transaction_id"])){
 			$msg = "订单查询失败";
 			return false;
+		}
+
+		// 自己的业务逻辑
+		if ($data['return_code'] == 'SUCCESS' || $data['result_code'] == 'SUCCESS') {
+			$out_trade_no = $data['out_trade_no']; 
+			$trade_no = $data['transaction_id'];
+
+			Order::finish($out_trade_no, $trade_no);
 		}
 		return true;
 	}
