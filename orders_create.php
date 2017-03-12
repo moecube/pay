@@ -118,8 +118,8 @@ else if ($payment === "wechat") {
     $wxpay_parameter->SetTotal_fee($total * 100);
     $wxpay_parameter->SetTime_start(date("YmdHis"));
     // $wxpay_parameter->SetTime_expire(date("YmdHis", time() + 600));
-    // $wxpay_parameter->SetNotify_url(WxPayConfig::NOTIFY_URL);
-    $wxpay_parameter->SetNotify_url("http://paysdk.weixin.qq.com/example/notify.php");
+    $wxpay_parameter->SetNotify_url(WxPayConfig::NOTIFY_URL);
+    // $wxpay_parameter->SetNotify_url("http://paysdk.weixin.qq.com/example/notify.php");
     $wxpay_parameter->SetTrade_type("NATIVE");
     $wxpay_parameter->SetProduct_id($app_id);
 

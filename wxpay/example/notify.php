@@ -46,7 +46,6 @@ class PayNotifyCallBack extends WxPayNotify
 			$msg = "订单查询失败";
 			return false;
 		}
-
 		// 自己的业务逻辑
 		if ($data['return_code'] == 'SUCCESS' || $data['result_code'] == 'SUCCESS') {
 			$out_trade_no = $data['out_trade_no']; 
