@@ -1,11 +1,12 @@
 FROM php:fpm
 
-RUN apt-get update && apt-get install -y libpq-dev libicu-dev
-RUN docker-php-ext-install pdo_pgsql
+RUN apt-get update && apt-get install -y libpq-dev libicu-dev libgmp-dev
+RUN docker-php-ext-install pdo_pgsql zip intl gmp
+RUN docker-php-ext-enable raphf propro
+RUN pecl install pecl_http
+RUN docker-php-ext-enable pecl_http
 
 RUN curl https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-RUN docker-php-ext-install zip pgsql intl
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
