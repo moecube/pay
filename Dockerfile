@@ -2,6 +2,7 @@ FROM php:fpm
 
 RUN apt-get update && apt-get install -y libpq-dev libicu-dev libgmp-dev
 RUN docker-php-ext-install pdo_pgsql zip intl gmp
+RUN pecl install raphf propro
 RUN docker-php-ext-enable raphf propro
 RUN pecl install pecl_http
 RUN docker-php-ext-enable pecl_http
