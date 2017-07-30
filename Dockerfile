@@ -5,7 +5,7 @@ RUN docker-php-ext-install pdo_pgsql zip intl gmp
 RUN pecl install raphf propro
 RUN docker-php-ext-enable raphf propro
 RUN pecl install pecl_http
-RUN docker-php-ext-enable pecl_http
+RUN docker-php-ext-enable http
 
 RUN curl https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
