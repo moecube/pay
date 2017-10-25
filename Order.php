@@ -25,7 +25,7 @@ class Order
         $query->execute(['app_id' => $app_id]);
         return $query->fetchColumn();
     }
-    
+
     public static function create($id, $app_id, $user_id, $payment, $currency, $total)
     {
         self::$db->beginTransaction();
@@ -159,7 +159,6 @@ TEMPLATE;
         $query->execute(['id' => $id]);
         $order = $query->fetch(PDO::FETCH_ASSOC);
 
-        
 
         $formatter = new NumberFormatter("zh_CN", NumberFormatter::CURRENCY);
         $order['total'] = $formatter->formatCurrency(floatval($order['total']), "CNY");
@@ -221,7 +220,41 @@ TEMPLATE;
     {
         $query = self::$db->prepare("SELECT id FROM keys WHERE user_id = :user_id AND app_id = :app_id LIMIT 1");
         $query->execute(['user_id' => $user_id, 'app_id' => $app_id]);
-        return $query->rowCount() > 0;
+        return $query->fetchColumn();
+    }
+
+    public static function bind($key, $device_id)
+    {
+        $query = self::$db->prepare("SELECT device_id FROM devices WHERE key = :key");
+        $query->execute(['key' => $key]);
+        $devices = $query->fetchAll(PDO::FETCH_COLUMN, 0);
+        if(in_array($device_id, $devices)){
+            # 已经绑定了当前设备
+            return true;
+        } else if ($query->rowCount() < 2) {
+            # 还没绑定当前设备，有剩余配额
+            $query = self::$db->prepare("INSERT INTO devices (key, device_id) VALUES (:key, :device_id)");
+            $query->execute(['key' => $key, 'device_id' => $device_id]);
+            return true;
+        } else {
+            # 没有剩余配额了
+            return false;
+        }
+    }
+
+    public static function activate($key, $user_id)
+    {
+        $query = self::$db->prepare("SELECT * FROM keys WHERE id = :key and user_id IS NULL LIMIT 1");
+        $query->execute(['key' => $key]);
+//        var_dump(1,$key, $user_id);
+        if ($query->rowCount() > 0) {
+            $query = self::$db->prepare("UPDATE keys SET user_id = :user_id WHERE id = :key");
+            $query->execute(['key' => $key, 'user_id' => $user_id]);
+//            var_dump($key, $user_id);
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 

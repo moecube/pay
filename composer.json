@@ -2,7 +2,8 @@
     "require": {
         "ramsey/uuid": "^3.5",
         "phpmailer/phpmailer": "^5.2",
-        "paypal/rest-api-sdk-php": "*"
+        "paypal/rest-api-sdk-php": "*",
+        "spomky-labs/jose": "^6.1"
     },
     "repositories": {
         "packagist": {
