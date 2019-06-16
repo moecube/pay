@@ -1,6 +1,6 @@
 FROM php:fpm
 
-RUN apt-get update && apt-get install -y libpq-dev libicu-dev libgmp-dev zlib1g-dev libcurl4-openssl-dev libssl-dev unzip
+RUN apt-get update && apt-get install -y libpq-dev libicu-dev libgmp-dev zlib1g-dev libcurl4-openssl-dev libssl-dev unzip git
 RUN docker-php-ext-install pdo_pgsql intl gmp
 RUN pecl install raphf propro
 RUN docker-php-ext-enable raphf propro
