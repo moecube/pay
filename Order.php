@@ -51,6 +51,10 @@ class Order
         $query->execute(['id' => $id]);
         $order = $query->fetch(PDO::FETCH_ASSOC);
 
+        $query = self::$db->prepare("SELECT id FROM keys WHERE order_id = :id");
+        $query->execute(['id' => $id]);
+        $keys = $query->fetchAll(PDO::FETCH_COLUMN, 0);
+
         if ($order['status'] == 'finished') {
             self::$db->rollBack();
             return;
@@ -111,7 +115,7 @@ class Order
         </thead>
         <tbody>
         <tr style="border-bottom: 1px solid lightgray">
-            <td style="text-align: left; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[app_id]</td>
+            <td style="text-align: left; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[app_id]<br>激活码: {join('<br>', $keys)}</td>
             <td style="text-align: right; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[total]</td>
         </tr>
         <tr style="border-bottom: 1px solid lightgray">
@@ -159,6 +163,9 @@ TEMPLATE;
         $query->execute(['id' => $id]);
         $order = $query->fetch(PDO::FETCH_ASSOC);
 
+        $query = self::$db->prepare("SELECT id FROM keys WHERE order_id = :id");
+        $query->execute(['id' => $id]);
+        $keys = $query->fetchAll(PDO::FETCH_COLUMN, 0);
 
         $formatter = new NumberFormatter("zh_CN", NumberFormatter::CURRENCY);
         $order['total'] = $formatter->formatCurrency(floatval($order['total']), "CNY");
@@ -189,9 +196,13 @@ TEMPLATE;
         </thead>
         <tbody>
         <tr style="border-bottom: 1px solid lightgray">
-            <td style="text-align: left; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[app_id]</td>
+            <td style="text-align: left; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[app_id]<br>激活码: {join('<br>', $keys)}</td>
             <td style="text-align: right; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[total]</td>
         </tr>
+        <tr>
+        {$keys}
+        </tr>
+        
         <tr style="border-bottom: 1px solid lightgray">
             <td style="text-align: right; border-bottom: 1px solid lightgray; margin: 5px 0;" colspan="2">总计: $order[total]</td>
         </tr>
