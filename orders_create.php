@@ -58,9 +58,9 @@ function CreateOrder ($id, $app_id, $user_id, $payment, $currency, $total) {
     Order::expire();
 
     // 检查是否已经购买
-    if (Order::keys_has($user_id, $app_id)) {
-        http_response_code(403);
-    }
+//    if (Order::keys_has($user_id, $app_id)) {
+//        http_response_code(403);
+//    }
 
     // 创建订单
     $order = Order::create($id, $app_id, $user_id, $payment, $currency, $total);

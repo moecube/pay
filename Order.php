@@ -54,6 +54,8 @@ class Order
         $query = self::$db->prepare("SELECT id FROM keys WHERE order_id = :id");
         $query->execute(['id' => $id]);
         $keys = $query->fetchAll(PDO::FETCH_COLUMN, 0);
+        $keys_view = join('<br>', $keys);
+        $keys_plain = join("\n", $keys);
 
         if ($order['status'] == 'finished') {
             self::$db->rollBack();
@@ -115,7 +117,7 @@ class Order
         </thead>
         <tbody>
         <tr style="border-bottom: 1px solid lightgray">
-            <td style="text-align: left; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[app_id]<br>激活码: {join('<br>', $keys)}</td>
+            <td style="text-align: left; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[app_id]<br>激活码: $keys_view</td>
             <td style="text-align: right; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[total]</td>
         </tr>
         <tr style="border-bottom: 1px solid lightgray">
@@ -142,6 +144,7 @@ TEMPLATE;
 *订购时间：* $order[updated_at]
 商品 价格
 $order[app_id] $order[total]
+激活码: $keys_plain
 总计: $order[total]
 付款方式：
 支付宝: $order[total]
@@ -166,6 +169,7 @@ TEMPLATE;
         $query = self::$db->prepare("SELECT id FROM keys WHERE order_id = :id");
         $query->execute(['id' => $id]);
         $keys = $query->fetchAll(PDO::FETCH_COLUMN, 0);
+        $keys_view = join('<br>', $keys);
 
         $formatter = new NumberFormatter("zh_CN", NumberFormatter::CURRENCY);
         $order['total'] = $formatter->formatCurrency(floatval($order['total']), "CNY");
@@ -196,7 +200,7 @@ TEMPLATE;
         </thead>
         <tbody>
         <tr style="border-bottom: 1px solid lightgray">
-            <td style="text-align: left; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[app_id]<br>激活码: {join('<br>', $keys)}</td>
+            <td style="text-align: left; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[app_id]<br>激活码: $keys_view</td>
             <td style="text-align: right; border-bottom: 1px solid lightgray; margin: 5px 0;">$order[total]</td>
         </tr>
         <tr>

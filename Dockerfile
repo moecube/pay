@@ -9,6 +9,8 @@ RUN docker-php-ext-enable http
 
 RUN curl https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+RUN cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
+
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
