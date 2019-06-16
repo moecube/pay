@@ -1,6 +1,6 @@
 FROM php:fpm
 
-RUN apt-get update && apt-get install -y libpq-dev libicu-dev libgmp-dev libzlib-dev
+RUN apt-get update && apt-get install -y libpq-dev libicu-dev libgmp-dev zlib1g-dev
 RUN docker-php-ext-install pdo_pgsql zip intl gmp
 RUN pecl install raphf propro
 RUN docker-php-ext-enable raphf propro
