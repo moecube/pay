@@ -76,13 +76,13 @@ class Order
 
         $mail->isSMTP();                                      // Set mailer to use SMTP
         $mail->Host = getenv("SMTP_HOST");  // Specify main and backup SMTP servers
-        $mail->SMTPAuth = true;                               // Enable SMTP authentication
+        $mail->SMTPAuth = !!getenv("SMTP_PASSWORD");                               // Enable SMTP authentication
         $mail->Username = getenv("SMTP_USERNAME");                 // SMTP username
         $mail->Password = getenv("SMTP_PASSWORD");                           // SMTP password
         $mail->SMTPSecure = getenv("SMTP_SECURE");                            // Enable TLS encryption, `ssl` also accepted
         $mail->Port = getenv("SMTP_PORT");                                    // TCP port to connect to
 
-        $mail->setFrom('info@mycard.moe', 'MyCard');
+        $mail->setFrom(getenv("SMTP_USERNAME"), 'MyCard');
         $mail->addAddress($order['user_id']);     // Add a recipient
         $mail->isHTML(true);                                  // Set email format to HTML
 
@@ -206,7 +206,7 @@ TEMPLATE;
         <tr>
         {$keys}
         </tr>
-        
+
         <tr style="border-bottom: 1px solid lightgray">
             <td style="text-align: right; border-bottom: 1px solid lightgray; margin: 5px 0;" colspan="2">总计: $order[total]</td>
         </tr>
@@ -231,6 +231,40 @@ TEMPLATE;
         return $query->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public static function devices($user_id)
+    {
+        $query = self::$db->prepare("SELECT devices.*, parsed FROM devices JOIN keys ON devices.key = keys.id LEFT JOIN useragents ON useragents.useragent = devices.useragent WHERE user_id = :user_id");
+        $query->execute(['user_id' => $user_id]);
+        $devices = $query->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($devices as &$device) {
+            if ($device['useragent']) {
+                if ($device['parsed']) {
+                    $device['parsed'] = json_decode($device['parsed'], true);
+                } else {
+                    $query = http_build_query([
+                        'access_key' => getenv('USERSTACK_ACCESS_KEY'),
+                        'ua' => $device['useragent'],
+                    ]);
+
+                    $ch = curl_init('http://api.userstack.com/detect?' . $query);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+                    $json = curl_exec($ch);
+                    curl_close($ch);
+
+                    $api_result = json_decode($json, true);
+
+                    if ($api_result['ua']) {
+                        $query = self::$db->prepare("INSERT INTO useragents (useragent, parsed) VALUES (:useragent, :parsed)");
+                        $query->execute(['useragent' => $device['useragent'], 'parsed' => $json]);
+                        $device['parsed'] = $api_result;
+                    }
+                }
+            }
+        }
+        return $devices;
+    }
+
     public static function keys_has($user_id, $app_id)
     {
         $query = self::$db->prepare("SELECT id FROM keys WHERE user_id = :user_id AND app_id = :app_id LIMIT 1");
@@ -243,13 +277,18 @@ TEMPLATE;
         $query = self::$db->prepare("SELECT device_id FROM devices WHERE key = :key");
         $query->execute(['key' => $key]);
         $devices = $query->fetchAll(PDO::FETCH_COLUMN, 0);
-        if(in_array($device_id, $devices)){
+
+        $query = self::$db->prepare("SELECT device_limit FROM apps JOIN keys ON apps.id = keys.app_id WHERE keys.id = :key");
+        $query->execute(['key' => $key]);
+        $device_limit = $query->fetchColumn();
+
+        if (in_array($device_id, $devices)) {
             # 已经绑定了当前设备
             return true;
-        } else if ($query->rowCount() < 2) {
+        } else if ($query->rowCount() < $device_limit) {
             # 还没绑定当前设备，有剩余配额
-            $query = self::$db->prepare("INSERT INTO devices (key, device_id) VALUES (:key, :device_id)");
-            $query->execute(['key' => $key, 'device_id' => $device_id]);
+            $query = self::$db->prepare("INSERT INTO devices (key, device_id, useragent) VALUES (:key, :device_id, :useragent)");
+            $query->execute(['key' => $key, 'device_id' => $device_id, 'useragent' => $_SERVER['HTTP_USER_AGENT']]);
             return true;
         } else {
             # 没有剩余配额了
